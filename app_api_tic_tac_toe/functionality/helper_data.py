@@ -39,6 +39,46 @@ def send_non_authentication_message(input_code):
     return non_auth_dict[input_code]
 
 
+def send_join_game_message(input_code, game_id, user, game):
+    join_game_message_dict = {
+        '404GAME1': {'code': '404GAME1', 'details': f"There's no game with the id {game_id}",
+                     'username': user.username},
+        '403GAME2': {'code': '403GAME2', 'details': "Can't join. Please, wait for another player to join your game",
+                     'username': user.username},
+    }
+
+    if game:
+        messages_involving_game_variable = {
+            '403GAME1': {'code': '403GAME1',
+                         'details': f"Game: {game.game_name}. Can't join. Game already has two players",
+                         'username': user.username},
+            '200GAMEC': {'code': '200GAMEC', 'details': "You have joined this game. It's NOT your turn to play",
+                         'username': user.username, 'game': get_full_game_dict(game, user)},
+        }
+
+        join_game_message_dict.update(messages_involving_game_variable)
+
+    return join_game_message_dict[input_code]
+
+
+def send_cannot_play_game_message(input_code, game_id, user, game):
+    cannot_play_game_message_dict = {
+        '404GAME1': {'code': '404GAME1', 'details': f"There's no game with the id {game_id}", 'username': user.username},
+        '403GAME3': {'code': '403GAME3', 'details': 'This game has ended', 'username': user.username},
+        'N/A': {'code': 'N/A', 'details': 'You are not participating in this game', 'username': user.username},
+    }
+
+    if game:
+        messages_involving_game_variable = {
+            '403GAME4': {'code': '403GAME4', 'details': "It's NOT your turn to play", 'username': user.username,
+                         'game': get_full_game_dict(game, user)}
+        }
+        
+        cannot_play_game_message_dict.update(messages_involving_game_variable)
+
+    return cannot_play_game_message_dict[input_code]
+
+
 def send_invalid_user_input_messages(input_code):
     invalid_user_input_dict = {
         '400GAME1': {'code': '400GAME1', 'details': 'Provide a valid action on a json object in the request body'},

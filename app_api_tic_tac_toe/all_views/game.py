@@ -9,6 +9,7 @@ from ..functionality.visualization import get_full_game_dict, get_game_info_dict
 from ..functionality.visualization import get_overall_game_stats, check_user_turn
 
 from ..functionality.helper_data import send_invalid_user_input_messages, send_non_authentication_message
+from ..functionality.helper_data import send_join_game_message, send_cannot_play_game_message
 from ..functionality.authentication import process_bearer_token
 from ..functionality.game_playing import user_made_move
 from ..functionality.update_data import create_new_game_data, join_game_update_data
@@ -110,38 +111,16 @@ def join_game(request, game_id):
 
         game = find_game(game_id)
         if not game:
-            return JsonResponse(
-                {'code': '404GAME1', 'details': f"There's no game with the id {game_id}", 'username': user.username}
-            )
+            return JsonResponse(send_join_game_message('404GAME1', game_id, user, game))
 
         if game.creator == user:
-            return JsonResponse(
-                {
-                    'code': '403GAME2',
-                    'details': "Can't join. Please, wait for another player to join your game",
-                    'username': user.username
-                }
-            )
+            return JsonResponse(send_join_game_message('403GAME2', game_id, user, game))
 
         if game.opponent:
-            return JsonResponse(
-                {
-                    'code': '403GAME1', 'details':
-                    f"Game: {game.game_name}. Can't join. Game already has two players",
-                    'username': user.username
-                }
-            )
+            return JsonResponse(send_join_game_message('403GAME1', game_id, user, game))
 
         join_game_update_data(game, user)
-
-        success_response = {
-            'code': '200GAMEC',
-            'details': "You have joined this game. It's NOT your turn to play",
-            'username': user.username, 
-            'game': get_full_game_dict(game, user),
-        }
-
-        return JsonResponse(success_response)
+        return JsonResponse(send_join_game_message('200GAMEC', game_id, user, game))
 
 
 @csrf_exempt
@@ -156,29 +135,18 @@ def game_play(request, game_id):
 
         game = find_game(game_id)
         if not game:
-            return JsonResponse(
-                {'code': '404GAME1', 'details': f"There's no game with the id {game_id}", 'username': user.username}
-            )
+            return JsonResponse(send_cannot_play_game_message('404GAME1', game_id, user, game))
 
         if game.ended_at:
-            return JsonResponse({'code': '403GAME3', 'details': 'This game has ended', 'username': user.username})
+            return JsonResponse(send_cannot_play_game_message('403GAME3', game_id, user, game))
 
         if user not in [game.creator, game.opponent]:
-            return JsonResponse(
-                {'code': 'N/A', 'details': 'You are not participating in this game', 'username': user.username}
-            )
+            return JsonResponse(send_cannot_play_game_message('N/A', game_id, user, game))
 
         is_user_turn = check_user_turn(user, game)
 
         if not is_user_turn:
-            return JsonResponse(
-                {
-                    'code': '403GAME4',
-                    'details': "It's NOT your turn to play",
-                    'username': user.username,
-                    'game': get_full_game_dict(game, user)
-                }
-            )
+            return JsonResponse(send_cannot_play_game_message('403GAME4', game_id, user, game))
 
         user_selected_square_number = check_user_input_validity(request)
 
