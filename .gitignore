@@ -2,3 +2,7 @@ venv
 .idea
 migrations/
 __init__*
+__pycache__
+.DS_Store
+app_api_tic_tac_toe/all_views/__pycache__/
+app_api_tic_tac_toe/functionality/__pycache__/
